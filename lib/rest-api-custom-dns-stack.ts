@@ -41,13 +41,12 @@ export class ApiCustomDnsStack extends Stack {
             })
         });
 
-
         const hostedZone = r53.HostedZone.fromLookup(this, 'test-hosted-zone', { domainName: 'yoloswag.org' });
-        const record = new r53.ARecord(this, 'test-a-record', {
+        new r53.ARecord(this, 'test-a-record', {
             zone: hostedZone,
             recordName: "test.yoloswag.org",
             target: r53.RecordTarget.fromAlias(new targets.ApiGateway(api)),
         })
-        new CfnOutput(this, "api-url", { value: api.url })
+        new CfnOutput(this, "api-url", { value: api.url });
     }
 }
