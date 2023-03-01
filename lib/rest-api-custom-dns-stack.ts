@@ -16,15 +16,18 @@ export class ApiCustomDnsStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        // reflet the existing certificate
-        const domainCert = acm.Certificate.fromCertificateArn(
-            this,
-            'cert', "arn:aws:acm:us-east-1:xxxxxxxxxx:certificate/aaaaaaaaa-bbbb-bbbb-ccccccccc"
-        )
+        const hostedZone = r53.HostedZone.fromLookup(this, 'test-hosted-zone', { domainName: 'yoloswag.org' });
+
+        // create certificate
+        const cert = new acm.Certificate(this, 'test-cert', {
+            domainName: 'test.yoloswag.org',
+            validation: acm.CertificateValidation.fromDns(hostedZone),
+        });
+
         const api = new apigateway.LambdaRestApi(this, 'test-api', {
             domainName: {
                 domainName: "test.yoloswag.org",
-                certificate: domainCert,
+                certificate: cert,
             },
             endpointTypes: [apigateway.EndpointType.REGIONAL],
             handler: new lambda.Function(this, 'hello-world-lambda', {
@@ -41,7 +44,6 @@ export class ApiCustomDnsStack extends Stack {
             })
         });
 
-        const hostedZone = r53.HostedZone.fromLookup(this, 'test-hosted-zone', { domainName: 'yoloswag.org' });
         new r53.ARecord(this, 'test-a-record', {
             zone: hostedZone,
             recordName: "test.yoloswag.org",
