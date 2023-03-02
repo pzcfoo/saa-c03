@@ -5,6 +5,7 @@ import {
     StackProps,
     Stack,
     CfnOutput,
+    aws_iam as iam,
     aws_route53_targets as targets,
     aws_route53 as r53,
     aws_certificatemanager as acm,
@@ -56,12 +57,16 @@ export class WsApiCustomDnsStack extends Stack {
         websocketApi.addRoute("message", {
             integration: new WebSocketLambdaIntegration("onmessage-handler", onMessageHandler),
         });
-
         const deployStage = new WebSocketStage(this, 'test-ws-stage', {
             stageName: "prod",
             autoDeploy: true,
             webSocketApi: websocketApi,
         })
+        onMessageHandler.addToRolePolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: ["execute-api:ManageConnections"],
+            resources: [`arn:aws:execute-api:${this.region}:${this.account}:${websocketApi.apiId}/${deployStage.stageName}/*`],
+        }));
         //new r53.ARecord(this, 'test-a-record', {
         //    zone: hostedZone,
         //    recordName: "test.yoloswag.org",
