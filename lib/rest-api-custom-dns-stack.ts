@@ -10,7 +10,6 @@ import {
     aws_lambda as lambda,
     aws_apigateway as apigateway,
 } from 'aws-cdk-lib'
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class ApiCustomDnsStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
