@@ -32,30 +32,33 @@ export class ProtectedApiCustomDnsStack extends Stack {
             code: lambda.Code.fromInline(
                 `
                 exports.handler = async (event, context, callback) => {
-                    var res = {statusCode: 200, headers: {'Content-Type': "*/*"}, body: event.pathParameters.project_id}
+                    var res = {statusCode: 200, headers: {'Content-Type': "*/*"}, body: "hello"}
                     callback(null, res);
                 };
                 `
             ),
             runtime: lambda.Runtime.NODEJS_16_X,
         });
+
+        const apiPolicy = new iam.PolicyDocument({
+            statements: [
+                new iam.PolicyStatement({
+                    actions: ["execute-api:Invoke"],
+                    effect: iam.Effect.DENY,
+                    notPrincipals: [
+                        new iam.ArnPrincipal(apiAccessRole.roleArn)
+                    ],
+                }),
+            ]
+        });
+
         const api = new apigateway.RestApi(this, 'test-api', {
             domainName: {
                 domainName: "test.yoloswag.org",
                 certificate: cert,
             },
             endpointTypes: [apigateway.EndpointType.REGIONAL],
-            policy: new iam.PolicyDocument({
-                statements: [
-                    new iam.PolicyStatement({
-                        actions: ["execute-api:Invoke"],
-                        effect: iam.Effect.DENY,
-                        notPrincipals: [
-                            new iam.ArnPrincipal(apiAccessRole.roleArn)
-                        ],
-                    })
-                ]
-            })
+            //policy: apiPolicy
         });
 
         const testResource = api.root.addResource("test");
@@ -78,12 +81,12 @@ export class ProtectedApiCustomDnsStack extends Stack {
         const statement = new iam.PolicyStatement({
             actions: ["execute-api:Invoke"],
             effect: iam.Effect.ALLOW,
-            resources: [api.arnForExecuteApi()]
+            resources: [api.arnForExecuteApi("GET", "/test/1234",)]
         });
         apiAccessRole.addToPolicy(statement);
 
         new CfnOutput(this, 'api-end-point', { value: api.urlForPath("/test") });
-        new CfnOutput(this, 'api-arn', { value: api.arnForExecuteApi() });
+        new CfnOutput(this, 'api-arn', { value: api.arnForExecuteApi("GET", "/test/1234") });
         new CfnOutput(this, 'role-for-api', { value: apiAccessRole.roleName });
         new CfnOutput(this, 'role-for-api-arn', { value: apiAccessRole.roleArn });
     }

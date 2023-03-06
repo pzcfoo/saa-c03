@@ -64,6 +64,12 @@ if __name__ == '__main__':
     a = session.get('https://test.yoloswag.org/test/1234')
     print(a.text)
     print()
+    print()
+
+    b = session.get('https://test.yoloswag.org/test/111')
+    print(b.text)
+    print()
+    print()
 
     # Test the wrong account can't assume the role
     sesh_b = boto3.Session(profile_name=TEST_PROFILE)
@@ -73,6 +79,7 @@ if __name__ == '__main__':
     session.auth = IAMAuth(boto3_session=sesh_b)
     a = session.get('https://test.yoloswag.org/test/1234')
     print(a.text)
+    print()
     print()
 
 
